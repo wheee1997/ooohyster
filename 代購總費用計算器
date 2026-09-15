@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>代購總費用計算器</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --primary: #111827;
+      --soft: #f9fafb;
+      --success: #047857;
+      --shadow: 0 12px 35px rgba(17, 24, 39, 0.07);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 22px 14px 40px;
+    }
+
+    .wrap {
+      width: min(1040px, 100%);
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(27px, 5vw, 38px);
+      letter-spacing: -0.03em;
+    }
+
+    .sub {
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 18px;
+    }
+
+    .settings,
+    .result-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .settings {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .setting-box {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+    }
+
+    .setting-box .k {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 3px;
+    }
+
+    .setting-box .v { font-weight: 800; }
+
+    .items {
+      display: grid;
+      gap: 10px;
+    }
+
+    .item-row {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 5px 18px rgba(17, 24, 39, 0.04);
+    }
+
+    .fields {
+      display: grid;
+      grid-template-columns: minmax(220px, 1.7fr) 90px minmax(140px, 1fr) 150px 125px;
+      gap: 10px;
+      align-items: end;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 11px 12px;
+      font-size: 16px;
+      outline: none;
+      background: #fff;
+    }
+
+    input:focus {
+      border-color: #9ca3af;
+      box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.05);
+    }
+
+    .tax-check {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 14px;
+      font-weight: 800;
+      margin: 0;
+    }
+
+    .tax-check input {
+      width: 19px;
+      height: 19px;
+      accent-color: var(--primary);
+      flex: 0 0 auto;
+    }
+
+    .row-total-box {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      border-radius: 11px;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      padding: 0 12px;
+      white-space: nowrap;
+    }
+
+    .item-total {
+      font-weight: 900;
+      font-size: 17px;
+    }
+
+    .result-card {
+      margin-top: 16px;
+      padding: 18px;
+    }
+
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 18px;
+      margin-bottom: 14px;
+    }
+
+    .summary-main { min-width: 0; }
+
+    .summary-topline {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+
+    .summary-label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .shipping-note {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .grand-total {
+      font-size: clamp(30px, 6vw, 42px);
+      font-weight: 950;
+      letter-spacing: -0.04em;
+    }
+
+    .used-count {
+      color: var(--muted);
+      font-size: 14px;
+      padding-bottom: 5px;
+      white-space: nowrap;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 13px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 16px;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .copy { background: var(--primary); color: #fff; }
+    .clear { background: #eceff3; color: var(--text); }
+
+    .status {
+      min-height: 22px;
+      margin-top: 9px;
+      color: var(--success);
+      font-size: 14px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 880px) {
+      .fields {
+        grid-template-columns: minmax(180px, 1fr) 90px minmax(130px, 1fr) 145px;
+      }
+      .total-field { grid-column: 1 / -1; }
+      .row-total-box { justify-content: flex-start; }
+    }
+
+    @media (max-width: 620px) {
+      .settings { grid-template-columns: repeat(3, 1fr); padding: 10px; }
+      .setting-box { padding: 9px; }
+      .fields { grid-template-columns: 1fr 82px; gap: 8px; }
+      .amount-field { grid-column: 1 / 2; }
+      .tax-field { grid-column: 2 / 3; }
+      .total-field { grid-column: 1 / -1; }
+      .tax-check { font-size: 13px; padding: 0 8px; }
+      .buttons { grid-template-columns: 1fr; }
+      .summary { align-items: flex-start; flex-direction: column; gap: 4px; }
+      .item-row { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>代購總費用計算器</h1>
+    <div class="sub">
+      <div>此計算器僅適用 美金$100 (含)以內，大小總和不超過30cm (含)、重量不超過 500g (含) 的品項。</div>
+      <div>有想要規範以外之品項，請先私訊 IG: ooohyster</div>
+    </div>
+
+    <section class="settings">
+      <div class="setting-box">
+        <div class="k">稅率</div>
+        <div class="v">9.1%</div>
+      </div>
+      <div class="setting-box">
+        <div class="k">匯率</div>
+        <div class="v">33</div>
+      </div>
+      <div class="setting-box">
+        <div class="k">代購費</div>
+        <div class="v">NT$100 / 件</div>
+      </div>
+    </section>
+
+    <section class="items" id="items"></section>
+
+    <section class="result-card">
+      <div class="summary">
+        <div class="summary-main">
+          <div class="summary-topline">
+            <div class="summary-label">全部品項總金額</div>
+            <div class="shipping-note">備註：價格不包含台灣寄送運費</div>
+          </div>
+          <div class="grand-total" id="grandTotal">NT$ 0</div>
+        </div>
+        <div class="used-count" id="usedCount">已填 0 / 8 項</div>
+      </div>
+
+      <div class="buttons">
+        <button class="copy" id="copyBtn" type="button">複製全部報價</button>
+        <button class="clear" id="clearBtn" type="button">全部清除</button>
+      </div>
+      <div class="status" id="status"></div>
+      <div class="note">金額欄位為每件美元單價；數量預設為 1。商品金額與代購費都會依數量計算，台幣結果四捨五入為整數。</div>
+    </section>
+  </main>
+
+  <script>
+    const TAX_RATE = 0.091;
+    const EXCHANGE_RATE = 33;
+    const SERVICE_FEE = 100;
+    const ITEM_COUNT = 8;
+
+    const itemsEl = document.getElementById('items');
+    const grandTotalEl = document.getElementById('grandTotal');
+    const usedCountEl = document.getElementById('usedCount');
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const statusEl = document.getElementById('status');
+    let currentCopyText = '';
+
+    function createRows() {
+      itemsEl.innerHTML = Array.from({ length: ITEM_COUNT }, (_, i) => `
+        <article class="item-row" data-index="${i}">
+          <div class="fields">
+            <div>
+              <label for="item-${i}">品項</label>
+              <input id="item-${i}" class="item-name" type="text" placeholder="品名" autocomplete="off" />
+            </div>
+            <div>
+              <label for="qty-${i}">數量</label>
+              <input id="qty-${i}" class="item-qty" type="number" min="1" step="1" inputmode="numeric" value="1" />
+            </div>
+            <div class="amount-field">
+              <label for="amount-${i}">單價（USD）</label>
+              <input id="amount-${i}" class="item-amount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="" />
+            </div>
+            <div class="tax-field">
+              <label>是否加稅</label>
+              <label class="tax-check" for="tax-${i}">
+                <input id="tax-${i}" class="item-tax" type="checkbox" checked />
+                <span>+tax 9.1%</span>
+              </label>
+            </div>
+            <div class="total-field">
+              <label>本項總計</label>
+              <div class="row-total-box">
+                <div class="item-total" id="rowTotal-${i}">NT$ 0</div>
+              </div>
+            </div>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function cleanNumber(n) {
+      if (!Number.isFinite(n)) return '';
+      return Number.isInteger(n) ? String(n) : String(Number(n.toFixed(2)));
+    }
+
+    function getRowData(row) {
+      const item = row.querySelector('.item-name').value.trim();
+      const rawQty = parseInt(row.querySelector('.item-qty').value, 10);
+      const qty = Number.isFinite(rawQty) && rawQty > 0 ? rawQty : 1;
+      const amount = parseFloat(row.querySelector('.item-amount').value);
+      const useTax = row.querySelector('.item-tax').checked;
+      const valid = item !== '' && Number.isFinite(amount) && amount >= 0;
+
+      if (!valid) {
+        return { item, qty, amount, useTax, valid, total: 0, text: '' };
+      }
+
+      const usdSubtotal = amount * qty;
+      const taxedUsd = useTax ? usdSubtotal * (1 + TAX_RATE) : usdSubtotal;
+      const serviceFee = SERVICE_FEE * qty;
+      const total = Math.round(taxedUsd * EXCHANGE_RATE + serviceFee);
+      const amountText = cleanNumber(amount);
+
+      const itemText = qty > 1 ? `${item} x${qty}` : item;
+      const usdExpression = qty > 1 ? `$${amountText}*${qty}` : `$${amountText}`;
+      const taxText = useTax ? '+tax 9.1%' : '';
+      const text = `${itemText}\n[(${usdExpression})${taxText}]*${EXCHANGE_RATE}+ntd $${serviceFee}=ntd $${total}`;
+
+      return { item, qty, amount, useTax, valid, total, text };
+    }
+
+    function calculate() {
+      const rows = [...document.querySelectorAll('.item-row')];
+      const validRows = [];
+      let grandTotal = 0;
+
+      rows.forEach((row, i) => {
+        const data = getRowData(row);
+        const rowTotalEl = document.getElementById(`rowTotal-${i}`);
+        rowTotalEl.textContent = data.valid ? `NT$ ${data.total.toLocaleString('zh-TW')}` : 'NT$ 0';
+
+        if (data.valid) {
+          validRows.push(data);
+          grandTotal += data.total;
+        }
+      });
+
+      grandTotalEl.textContent = `NT$ ${grandTotal.toLocaleString('zh-TW')}`;
+      usedCountEl.textContent = `已填 ${validRows.length} / ${ITEM_COUNT} 項`;
+
+      if (validRows.length === 0) {
+        currentCopyText = '';
+      } else {
+        const blocks = validRows.map(data => data.text);
+        currentCopyText = `${blocks.join('\n\n')}\n\n總計 ntd $${grandTotal}`;
+      }
+    }
+
+    async function copyText() {
+      calculate();
+      if (!currentCopyText) {
+        statusEl.textContent = '請先填入至少一個品項與金額。';
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(currentCopyText);
+      } catch (err) {
+        const temp = document.createElement('textarea');
+        temp.value = currentCopyText;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+      }
+      statusEl.textContent = '已複製，可以直接貼給客人。';
+      setTimeout(() => { statusEl.textContent = ''; }, 2200);
+    }
+
+    function clearAll() {
+      document.querySelectorAll('.item-row').forEach(row => {
+        row.querySelector('.item-name').value = '';
+        row.querySelector('.item-qty').value = '1';
+        row.querySelector('.item-amount').value = '';
+        row.querySelector('.item-tax').checked = true;
+      });
+      statusEl.textContent = '';
+      calculate();
+      document.getElementById('item-0').focus();
+    }
+
+    createRows();
+
+    itemsEl.addEventListener('input', calculate);
+    itemsEl.addEventListener('change', calculate);
+    copyBtn.addEventListener('click', copyText);
+    clearBtn.addEventListener('click', clearAll);
+
+    calculate();
+  </script>
+</body>
+</html>
